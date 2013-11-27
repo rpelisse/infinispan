@@ -1,19 +1,19 @@
-/* 
- * JBoss, Home of Professional Open Source 
+/*
+ * JBoss, Home of Professional Open Source
  * Copyright 2012 Red Hat Inc. and/or its affiliates and other contributors
- * as indicated by the @author tag. All rights reserved. 
- * See the copyright.txt in the distribution for a 
+ * as indicated by the @author tag. All rights reserved.
+ * See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
- * This copyrighted material is made available to anyone wishing to use, 
- * modify, copy, or redistribute it subject to the terms and conditions 
- * of the GNU Lesser General Public License, v. 2.1. 
- * This program is distributed in the hope that it will be useful, but WITHOUT A 
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
- * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
- * You should have received a copy of the GNU Lesser General Public License, 
- * v.2.1 along with this distribution; if not, write to the Free Software 
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
+ * This copyrighted material is made available to anyone wishing to use,
+ * modify, copy, or redistribute it subject to the terms and conditions
+ * of the GNU Lesser General Public License, v. 2.1.
+ * This program is distributed in the hope that it will be useful, but WITHOUT A
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * You should have received a copy of the GNU Lesser General Public License,
+ * v.2.1 along with this distribution; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA  02110-1301, USA.
  */
 package org.infinispan.query.distributed;
@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.DistributedMassIndexing")
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
-   protected static final int NUM_NODES = 4;
+   protected static final int NUM_NODES = 1;
    protected List<Cache> caches = new ArrayList<Cache>(NUM_NODES);
    protected static final String[] neededCacheNames = new String[] {
       org.infinispan.api.BasicCacheContainer.DEFAULT_CACHE_NAME,
@@ -66,16 +66,16 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    public void testReindexing() throws Exception {
       caches.get(0).put(key("F1NUM"), new Car("megane", "white", 300));
       verifyFindsCar(1, "megane");
-      caches.get(1).put(key("F2NUM"), new Car("megane", "blue", 300));
+      caches.get(0).put(key("F2NUM"), new Car("megane", "blue", 300));
       verifyFindsCar(2, "megane");
       //add an entry without indexing it:
-      caches.get(1).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F3NUM"), new Car("megane", "blue", 300));
+      caches.get(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F3NUM"), new Car("megane", "blue", 300));
       verifyFindsCar(2, "megane");
       //re-sync datacontainer with indexes:
       rebuildIndexes();
       verifyFindsCar(3, "megane");
       //verify we cleanup old stale index values:
-      caches.get(3).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("F2NUM"));
+      caches.get(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("F2NUM"));
       verifyFindsCar(3, "megane");
       //re-sync
       rebuildIndexes();
