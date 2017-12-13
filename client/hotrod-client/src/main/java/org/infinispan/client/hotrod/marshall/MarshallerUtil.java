@@ -1,9 +1,19 @@
 package org.infinispan.client.hotrod.marshall;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
+import java.io.ObjectStreamConstants;
+import java.util.List;
+
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 
@@ -73,4 +83,23 @@ public final class MarshallerUtil {
       }
    }
 
+   private final static class CheckedInputStream extends ObjectInputStream {
+
+      private final List<String> whitelist;
+
+      public CheckedInputStream(InputStream in, List<String> whitelist) throws IOException {
+         super(in);
+         this.whitelist = whitelist;
+      }
+
+      @Override
+      protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+         //Enforce SerialKiller's whitelist
+         boolean safeClass = MarshallUtil.isSafeClass(desc.getName(), whitelist);
+         if (!safeClass)
+            throw log.classNotInWhitelist(desc.getName());
+
+         return super.resolveClass(desc);
+      }
+   }
 }
